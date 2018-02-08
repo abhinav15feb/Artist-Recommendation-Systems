@@ -1,0 +1,65 @@
+SELECT t2."artist1",t2."artist2","Count-distinct user", "Count-Artist","Count-distinct user"/"Count-Artist" as "Weight"
+FROM
+  (SELECT t."artist1",
+    t."artist2",
+    COUNT(*)                 AS "Count-distinct user",
+    SUM(t."Count-same user") AS "Count-pair user"
+  FROM
+    (SELECT s1.user_name,
+      s1.artist_name "artist1",
+      s2.artist_name "artist2",
+      COUNT(*) "Count-same user"
+    FROM (select * from user_recent_track where extract(year from date_last_played)>=2012) s1
+    JOIN (select * from user_recent_track where extract(year from date_last_played)>=2012) s2
+    ON s1.user_name  = s2.user_name
+    and s1.artist_name!=s2.artist_name
+    GROUP BY s1.USER_NAME,
+      s1.ARTIST_NAME,
+      s2.ARTIST_NAME
+    ) t
+  GROUP BY t."artist1",
+    t."artist2"
+  ) t2
+JOIN
+  (SELECT artist_name,
+    COUNT(DISTINCT(t3.user_name)) AS "Count-Artist"
+  FROM user_recent_track t3 left outer join (select * from user_details where user_country in ('United States','United Kingdom','Canada'))  t4 on t3.user_name=t4.user_name where extract(year from date_last_played)>=2012
+  GROUP BY artist_name
+  ORDER BY 2 DESC
+  ) t3
+ON t2."artist1" = t3.artist_name
+ORDER BY 3 DESC;
+
+
+
+SELECT t2."artist1",t2."artist2","Count-distinct user", "Count-Artist","Count-distinct user"/"Count-Artist" as "Weight"
+FROM
+  (SELECT t."artist1",
+    t."artist2",
+    COUNT(*)                 AS "Count-distinct user",
+    SUM(t."Count-same user") AS "Count-pair user"
+  FROM
+    (SELECT s1.user_name,
+      s1.artist "artist1",
+      s2.artist "artist2",
+      COUNT(*) "Count-same user"
+    FROM (select * from user_loved_track where extract(year from date_liked)>=2012) s1
+    JOIN (select * from user_loved_track where extract(year from date_liked)>=2012) s2
+    ON s1.user_name  = s2.user_name
+    and s1.artist!=s2.artist
+    GROUP BY s1.USER_NAME,
+      s1.ARTIST,
+      s2.ARTIST
+    ) t
+  GROUP BY t."artist1",
+    t."artist2"
+  ) t2
+JOIN
+  (SELECT artist,
+    COUNT(DISTINCT(t3.user_name)) AS "Count-Artist"
+  FROM user_loved_track t3 left outer join (select * from user_details where user_country in ('United States','United Kingdom','Canada'))  t4 on t3.user_name=t4.user_name where extract(year from date_liked)>=2012
+  GROUP BY artist
+  ORDER BY 2 DESC
+  ) t3
+ON t2."artist1" = t3.artist
+ORDER BY 3 DESC;
